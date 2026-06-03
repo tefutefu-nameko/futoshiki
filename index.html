@@ -301,7 +301,6 @@
       <ul>
         <li>1つだけ入力したときは、これまでどおりその不等式を表示します。</li>
         <li>2つ入力したとき、<strong>共通範囲がある場合</strong>（例: <code>-1&lt;x</code> と <code>x&lt;=3</code>）→ 答えは <code>-1 &lt; x &lt;= 3</code> にまとめ、数直線には<strong>2つの不等式も両方</strong>表示。</li>
-        <li>2つとも満たす範囲がない（例: <code>x&lt;-2</code> と <code>x&gt;=1</code>）→ <strong>または</strong>として2本の範囲線を表示。</li>
         <li>1つの欄に <code>-1 &lt; x &lt;= 3</code> のように x が挟まれた形も入力できます。</li>
       </ul>
     </section>
@@ -396,8 +395,8 @@
       const opx = m[2];
       if (isNaN(v)) return { error: "数値を読み取れません。" };
       if (opx === "<" || opx === "<=")
-        return { intervals: [{ left: null, right: v, leftOpen: false, rightOpen: isStrictOp(opx), ray: "left" }] };
-      return { intervals: [{ left: v, right: null, leftOpen: isStrictOp(opx), rightOpen: false, ray: "right" }] };
+        return { intervals: [{ left: v, right: null, leftOpen: isStrictOp(opx), rightOpen: false, ray: "right" }]};
+      return { intervals: [{ left: null, right: v, leftOpen: false, rightOpen: isStrictOp(opx), ray: "left" }]};
     }
 
     return { error: "式の形式が分かりません。例: x > 2  または  -1 < x <= 3" };
@@ -548,10 +547,14 @@
         laneOffset: intervalEquals(v, answer) ? 0 : -step
       }));
     }
-    return [
+    /*return [
       ...visuals.map((v, i) => ({ ...v, laneOffset: -step * (i + 1) })),
       { ...answer, laneOffset: 0 }
-    ];
+    ];*/
+    return visuals.map((v, i) => ({
+      ...v,
+      laneOffset: -step * i
+    }));
   }
 
   function intervalsForDraw(combined) {
