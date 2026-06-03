@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>不等式の範囲図示</title>
+  <style>
+    :root {
+      --bg: #f8f9fb;
+      --card: #fff;
+      --text: #1a1a2e;
+      --muted: #5c6370;
+      --accent: #2563eb;
+      --line: #334155;
+      --range: #1e40af;
+      --error: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 3rem;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 0.35rem;
+    }
+    .lead {
+      color: var(--muted);
+      margin: 0 0 1.25rem;
+      font-size: 0.95rem;
+    }
+    .panel {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 1.25rem 1.35rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      font-size: 0.95rem;
+    }
+    .input-row {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .expr-field {
+      flex: 1 1 200px;
+      min-width: 160px;
+    }
+    .expr-field label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    .expr-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      flex: 1 1 280px;
+    }
+    .expr-input {
+      width: 100%;
+      font-size: 1.15rem;
+      padding: 0.55rem 0.75rem;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      font-family: "Cambria Math", "Times New Roman", serif;
+    }
+    .expr-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    /* 追加: 入力補助ボタンのスタイル */
+    .helper-btns {
+      display: flex;
+      gap: 0.3rem;
+      margin-top: 0.3rem;
+      flex-wrap: wrap;
+    }
+    .helper-btn {
+      background: #e2e8f0;
+      color: var(--text);
+      border: none;
+      border-radius: 4px;
+      padding: 1.0rem 1.5rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      font-family: "Cambria Math", serif;
+      font-weight: 500;
+      min-width: 38px;
+    }
+    .helper-btn:hover { background: #cbd5e1; }
+
+    .helper-btns-num {
+      margin-top: 0.5rem;
+    }
+
+    #result-text {
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
+      font-family: "Cambria Math", "Times New Roman", serif;
+      color: var(--text);
+      min-height: 1.5em;
+    }
+    #result-text .tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-family: "Segoe UI", "Hiragino Sans", Meiryo, sans-serif;
+      color: var(--muted);
+      margin-right: 0.35rem;
+      vertical-align: middle;
+    }
+    button {
+      font-size: 1rem;
+      padding: 0.55rem 1.1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    button:hover { filter: brightness(1.05); }
+    button.secondary {
+      background: #e2e8f0;
+      color: var(--text);
+      font-weight: 500;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.85rem;
+    }
+    .examples {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+    .examples span {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    #message {
+      min-height: 1.4em;
+      margin-top: 0.65rem;
+      font-size: 0.9rem;
+      color: var(--error);
+    }
+    #message.ok { color: #047857; }
+    #canvas-wrap {
+      overflow-x: auto;
+      padding: 0.5rem 0;
+    }
+    svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .help h2 {
+      font-size: 1.05rem;
+      margin: 0 0 0.6rem;
+    }
+    .help ul {
+      margin: 0;
+      padding-left: 1.2rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .help li { margin-bottom: 0.35rem; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      margin-top: 0.75rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .legend-item svg { width: 56px; height: 36px; }
+    #canvas-wrap svg {
+      min-height: 180px;
+      height: auto;
+      max-width: 100%;
+    }
+    @media print {
+      body { background: #fff; }
+      .panel { box-shadow: none; border: 1px solid #ccc; }
+      button, .examples { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>不等式の範囲図示</h1>
+    <p class="lead">不等式を1〜2つ入力すると、教科書どおりの記号（●／○）で数直線上に範囲を表示します。2つ入力時は共通範囲を自動でまとめます。オフラインでも使えます。</p>
+
+    <section class="panel">
+      <div class="input-row">
+        <div class="expr-inputs">
+          <div class="expr-field">
+            <label for="expr1">不等式1（変数は x）</label>
+            <input type="text" id="expr1" class="expr-input" value="-1 < x" placeholder="例: -1 < x" autocomplete="off" spellcheck="false">
+            <div class="helper-btns" data-target="expr1">
+              <button type="button" class="helper-btn">x</button>
+              <button type="button" class="helper-btn">&lt;</button>
+              <button type="button" class="helper-btn">&gt;</button>
+              <button type="button" class="helper-btn">&lt;=</button>
+              <button type="button" class="helper-btn">&gt;=</button>
+              <button type="button" class="helper-btn">-</button>
+              <button type="button" class="helper-btn" data-action="backspace">⌫</button>
+              <button type="button" class="helper-btn" data-action="clear">C</button>
+            </div>
+            <div class="helper-btns helper-btns-num" data-target="expr1">
+              <button type="button" class="helper-btn">1</button>
+              <button type="button" class="helper-btn">2</button>
+              <button type="button" class="helper-btn">3</button>
+              <button type="button" class="helper-btn">4</button>
+              <button type="button" class="helper-btn">5</button>
+              <button type="button" class="helper-btn">6</button>
+              <button type="button" class="helper-btn">7</button>
+              <button type="button" class="helper-btn">8</button>
+              <button type="button" class="helper-btn">9</button>
+              <button type="button" class="helper-btn">0</button>
+            </div>
+          </div>
+          <div class="expr-field">
+            <label for="expr2">不等式2（任意・2つ目）</label>
+            <input type="text" id="expr2" class="expr-input" value="x <= 3" placeholder="例: x <= 3" autocomplete="off" spellcheck="false">
+            <div class="helper-btns" data-target="expr2">
+              <button type="button" class="helper-btn">x</button>
+              <button type="button" class="helper-btn">&lt;</button>
+              <button type="button" class="helper-btn">&gt;</button>
+              <button type="button" class="helper-btn">&lt;=</button>
+              <button type="button" class="helper-btn">&gt;=</button>
+              <button type="button" class="helper-btn">-</button>
+              <button type="button" class="helper-btn" data-action="backspace">⌫</button>
+              <button type="button" class="helper-btn" data-action="clear">C</button>
+            </div>
+            <div class="helper-btns helper-btns-num" data-target="expr2">
+              <button type="button" class="helper-btn">1</button>
+              <button type="button" class="helper-btn">2</button>
+              <button type="button" class="helper-btn">3</button>
+              <button type="button" class="helper-btn">4</button>
+              <button type="button" class="helper-btn">5</button>
+              <button type="button" class="helper-btn">6</button>
+              <button type="button" class="helper-btn">7</button>
+              <button type="button" class="helper-btn">8</button>
+              <button type="button" class="helper-btn">9</button>
+              <button type="button" class="helper-btn">0</button>
+            </div>
+          </div>
+        </div>
+        <button type="button" id="drawBtn">表示</button>
+      </div>
+      <div class="examples">
+        <span>例：</span>
+        <button type="button" class="secondary" data-e1="-1 < x" data-e2="x <= 3">かつ（-1&lt;x と x&lt;=3）</button>
+        <button type="button" class="secondary" data-e1="x > 2" data-e2="x >= 3">かつ（x&gt;2 と x&gt;=3）</button>
+        <button type="button" class="secondary" data-e1="x < -2" data-e2="x >= 1">または（離れた2範囲）</button>
+        <button type="button" class="secondary" data-e1="x > 2" data-e2="">x &gt; 2 のみ</button>
+        <button type="button" class="secondary" data-e1="-1 < x <= 3" data-e2="">-1 &lt; x &lt;= 3</button>
+      </div>
+      <p id="result-text" aria-live="polite"></p>
+      <p id="message" aria-live="polite"></p>
+      <div id="canvas-wrap"></div>
+      <div class="legend">
+        <div class="legend-item">
+          <svg viewBox="0 0 56 36" aria-hidden="true"><line x1="6" y1="26" x2="50" y2="26" stroke="#334155" stroke-width="2"/><polygon points="12,26 12,10 40,10 40,26" fill="rgba(59,130,246,0.28)"/><circle cx="12" cy="26" r="4" fill="#1a1a2e"/><line x1="12" y1="22" x2="12" y2="10" stroke="#1a1a2e" stroke-width="1.5"/><line x1="12" y1="10" x2="50" y2="10" stroke="#1e40af" stroke-width="2.5"/></svg>
+          <span>以上・以下 … 黒丸＋縦線</span>
+        </div>
+        <div class="legend-item">
+          <svg viewBox="0 0 56 36" aria-hidden="true"><line x1="6" y1="26" x2="50" y2="26" stroke="#334155" stroke-width="2"/><polygon points="12,26 28,10 50,10 50,26" fill="rgba(59,130,246,0.28)"/><circle cx="12" cy="26" r="4" fill="#fff" stroke="#1a1a2e" stroke-width="1.5"/><line x1="12" y1="26" x2="28" y2="10" stroke="#1a1a2e" stroke-width="1.5"/><line x1="28" y1="10" x2="50" y2="10" stroke="#1e40af" stroke-width="2.5"/></svg>
+          <span>より大（&gt;）… 白丸＋右上の斜線</span>
+        </div>
+        <div class="legend-item">
+          <svg viewBox="0 0 56 36" aria-hidden="true"><line x1="6" y1="26" x2="50" y2="26" stroke="#334155" stroke-width="2"/><polygon points="6,26 6,10 28,10 44,26" fill="rgba(59,130,246,0.28)"/><circle cx="44" cy="26" r="4" fill="#fff" stroke="#1a1a2e" stroke-width="1.5"/><line x1="44" y1="26" x2="28" y2="10" stroke="#1a1a2e" stroke-width="1.5"/><line x1="6" y1="10" x2="28" y2="10" stroke="#1e40af" stroke-width="2.5"/></svg>
+          <span>より小（&lt;）… 白丸＋左上の斜線</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel help">
+      <h2>入力のしかた</h2>
+      <ul>
+        <li>1つだけ入力したときは、これまでどおりその不等式を表示します。</li>
+        <li>2つ入力したとき、<strong>共通範囲がある場合</strong>（例: <code>-1&lt;x</code> と <code>x&lt;=3</code>）→ 答えは <code>-1 &lt; x &lt;= 3</code> にまとめ、数直線には<strong>2つの不等式も両方</strong>表示。</li>
+        <li>2つとも満たす範囲がない（例: <code>x&lt;-2</code> と <code>x&gt;=1</code>）→ <strong>または</strong>として2本の範囲線を表示。</li>
+        <li>1つの欄に <code>-1 &lt; x &lt;= 3</code> のように x が挟まれた形も入力できます。</li>
+      </ul>
+    </section>
+  </div>
+
+  <script>
+(function () {
+  "use strict";
+
+  function normalize(s) {
+    return s
+      .replace(/\s+/g, " ")
+      .replace(/[ｘＸ]/g, "x")
+      .replace(/[＞>]/g, ">")
+      .replace(/[＜<]/g, "<")
+      .replace(/≧|≦|≥|≤/g, (c) => ({ "≧": ">=", "≦": "<=", "≥": ">=", "≤": "<=" }[c]))
+      .replace(/以上/g, ">=")
+      .replace(/以下/g, "<=")
+      .replace(/より大きい/g, ">")
+      .replace(/より小さい/g, "<")
+      .replace(/未満/g, "<")
+      .replace(/超える/g, ">")
+      .trim();
+  }
+
+  function parseNumber(tok) {
+    const t = tok.trim();
+    if (/^-?\d+(\.\d+)?$/.test(t)) return parseFloat(t);
+    const frac = t.match(/^(-?\d+)\s*\/\s*(\d+)$/);
+    if (frac) return parseInt(frac[1], 10) / parseInt(frac[2], 10);
+    return NaN;
+  }
+
+  function isStrictOp(op) {
+    return op === "<" || op === ">";
+  }
+
+  function parseChain(a, op1, op2, b) {
+    if (isNaN(a) || isNaN(b)) return { error: "数値を読み取れません。" };
+    let left = null;
+    let right = null;
+    let leftOpen = false;
+    let rightOpen = false;
+    if (op1 === "<" || op1 === "<=") {
+      left = a;
+      leftOpen = isStrictOp(op1);
+    } else if (op1 === ">" || op1 === ">=") {
+      right = a;
+      rightOpen = isStrictOp(op1);
+    }
+    if (op2 === "<" || op2 === "<=") {
+      right = b;
+      rightOpen = isStrictOp(op2);
+    } else if (op2 === ">" || op2 === ">=") {
+      left = b;
+      leftOpen = isStrictOp(op2);
+    }
+    if (left == null || right == null) return { error: "式の形式が分かりません。" };
+    return {
+      intervals: [{
+        left: Math.min(left, right),
+        right: Math.max(left, right),
+        leftOpen,
+        rightOpen
+      }]
+    };
+  }
+
+  function parseSingle(part) {
+    const s = normalize(part);
+    const num = "(-?\\d+(?:\\.\\d+)?(?:\\s*/\\s*\\d+)?)";
+    const op = "(>=|<=|>|<)";
+
+    let m = s.match(new RegExp("^" + num + "\\s*" + op + "\\s*x\\s*" + op + "\\s*" + num + "$"));
+    if (m) {
+      return parseChain(parseNumber(m[1]), m[2], m[3], parseNumber(m[4]));
+    }
+
+    m = s.match(new RegExp("^x\\s*" + op + "\\s*" + num + "$"));
+    if (m) {
+      const v = parseNumber(m[2]);
+      const opx = m[1];
+      if (isNaN(v)) return { error: "数値を読み取れません。" };
+      if (opx === ">" || opx === ">=")
+        return { intervals: [{ left: v, right: null, leftOpen: isStrictOp(opx), rightOpen: false, ray: "right" }] };
+      return { intervals: [{ left: null, right: v, leftOpen: false, rightOpen: isStrictOp(opx), ray: "left" }] };
+    }
+
+    m = s.match(new RegExp("^" + num + "\\s*" + op + "\\s*x$"));
+    if (m) {
+      const v = parseNumber(m[1]);
+      const opx = m[2];
+      if (isNaN(v)) return { error: "数値を読み取れません。" };
+      if (opx === "<" || opx === "<=")
+        return { intervals: [{ left: null, right: v, leftOpen: false, rightOpen: isStrictOp(opx), ray: "left" }] };
+      return { intervals: [{ left: v, right: null, leftOpen: isStrictOp(opx), rightOpen: false, ray: "right" }] };
+    }
+
+    return { error: "式の形式が分かりません。例: x > 2  または  -1 < x <= 3" };
+  }
+
+  function parseExpr(raw) {
+    const s = normalize(raw);
+    if (!s) return { intervals: [] };
+
+    const parts = s.split(/\s*(?:または|もしくは|あるいは|or|OR|\|)\s*/);
+    const all = [];
+    for (const p of parts) {
+      if (!p.trim()) continue;
+      const one = parseSingle(p);
+      if (one.error) return one;
+      all.push(...one.intervals);
+    }
+    return { intervals: all };
+  }
+
+  function isSandwiched(it) {
+    return it.left != null && it.right != null;
+  }
+
+  function formatInterval(it) {
+    if (isSandwiched(it)) {
+      const lOp = it.leftOpen ? "<" : "<=";
+      const rOp = it.rightOpen ? "<" : "<=";
+      return niceNum(it.left) + " " + lOp + " x " + rOp + " " + niceNum(it.right);
+    }
+    if (it.ray === "right" || (it.left != null && it.right == null)) {
+      return "x " + (it.leftOpen ? ">" : ">=") + " " + niceNum(it.left);
+    }
+    return "x " + (it.rightOpen ? "<" : "<=") + " " + niceNum(it.right);
+  }
+
+  function lowerBound(it) {
+    if (it.left != null) return { v: it.left, open: it.leftOpen };
+    return { v: -Infinity, open: false };
+  }
+
+  function upperBound(it) {
+    if (it.right != null) return { v: it.right, open: it.rightOpen };
+    return { v: Infinity, open: false };
+  }
+
+  function intervalEquals(a, b) {
+    return (
+      a.left === b.left &&
+      a.right === b.right &&
+      !!a.leftOpen === !!b.leftOpen &&
+      !!a.rightOpen === !!b.rightOpen &&
+      (a.ray || null) === (b.ray || null)
+    );
+  }
+
+  function intersectIntervals(a, b) {
+    const lo = lowerBound(a);
+    const hi = upperBound(a);
+    const lo2 = lowerBound(b);
+    const hi2 = upperBound(b);
+    let lv = lo.v > lo2.v ? lo.v : lo2.v;
+    let lOpen = lo.v > lo2.v ? lo.open : lo2.v > lo.v ? lo2.open : lo.open || lo2.open;
+    let rv = hi.v < hi2.v ? hi.v : hi2.v;
+    let rOpen = hi.v < hi2.v ? hi.open : hi2.v < hi.v ? hi2.open : hi.open || hi2.open;
+    if (lv > rv || (lv === rv && (lOpen || rOpen))) return null;
+    const out = {
+      left: lv === -Infinity ? null : lv,
+      right: rv === Infinity ? null : rv,
+      leftOpen: lOpen,
+      rightOpen: rOpen
+    };
+    if (out.left != null && out.right == null) out.ray = "right";
+    else if (out.left == null && out.right != null) out.ray = "left";
+    return out;
+  }
+
+  function combineTwoInputs(raw1, raw2) {
+    const r1 = parseExpr(raw1);
+    if (r1.error) return r1;
+    // 追加: 不等式1由来のデータにラベル「①」を付与
+    r1.intervals.forEach(it => it.label = "①");
+
+    const r2 = parseExpr(raw2);
+    if (r2.error) return r2;
+    // 追加: 不等式2由来のデータにラベル「②」を付与
+    r2.intervals.forEach(it => it.label = "②");
+
+    const has1 = normalize(raw1).length > 0;
+    const has2 = normalize(raw2).length > 0;
+    if (!has1 && !has2) return { error: "式を入力してください。" };
+    if (!has1) {
+      return {
+        intervals: r2.intervals,
+        display: r2.intervals.map(formatInterval).join(" または "),
+        mode: "single"
+      };
+    }
+    if (!has2) {
+      return {
+        intervals: r1.intervals,
+        display: r1.intervals.map(formatInterval).join(" または "),
+        mode: "single"
+      };
+    }
+    if (r1.intervals.length === 1 && r2.intervals.length === 1) {
+      const hit = intersectIntervals(r1.intervals[0], r2.intervals[0]);
+      if (hit) {
+        return {
+          intervals: [hit],
+          visualIntervals: [
+            { ...r1.intervals[0] },
+            { ...r2.intervals[0] }
+          ],
+          resultInterval: { ...hit },
+          display: formatInterval(hit),
+          mode: "and"
+        };
+      }
+      return {
+        intervals: [...r1.intervals, ...r2.intervals],
+        display: formatInterval(r1.intervals[0]) + " または " + formatInterval(r2.intervals[0]),
+        mode: "or"
+      };
+    }
+    const merged = [...r1.intervals, ...r2.intervals];
+    return {
+      intervals: merged,
+      display: merged.map(formatInterval).join(" または "),
+      mode: "or"
+    };
+  }
+
+  function assignLanes(intervals) {
+    const step = 15;
+    if (intervals.length <= 1) return intervals.map((it) => ({ ...it, laneOffset: 0 }));
+    const mid = (intervals.length - 1) / 2;
+    return intervals.map((it, i) => ({ ...it, laneOffset: (i - mid) * step }));
+  }
+
+  /** かつ表示：答えは中央、それ以外の入力は青線を上へ */
+  function assignLanesForAnd(visuals, answer) {
+    const step = 15;
+    const matchCount = visuals.filter((v) => intervalEquals(v, answer)).length;
+    if (matchCount === 1) {
+      return visuals.map((v) => ({
+        ...v,
+        laneOffset: intervalEquals(v, answer) ? 0 : -step
+      }));
+    }
+    return [
+      ...visuals.map((v, i) => ({ ...v, laneOffset: -step * (i + 1) })),
+      { ...answer, laneOffset: 0 }
+    ];
+  }
+
+  function intervalsForDraw(combined) {
+    if (combined.mode === "and" && combined.visualIntervals && combined.resultInterval) {
+      return assignLanesForAnd(combined.visualIntervals, combined.resultInterval);
+    }
+    return assignLanes(combined.intervals);
+  }
+
+  function niceNum(n) {
+    if (Number.isInteger(n)) return String(n);
+    return String(Math.round(n * 100) / 100);
+  }
+
+  function bounds(intervals) {
+    const vals = [];
+    for (const it of intervals) {
+      if (it.left != null) vals.push(it.left);
+      if (it.right != null) vals.push(it.right);
+    }
+    if (!vals.length) return { min: -5, max: 5 };
+    let min = Math.min(...vals);
+    let max = Math.max(...vals);
+    const span = max - min || 4;
+    const pad = Math.max(2, Math.ceil(span * 0.35));
+    if (intervals.some((i) => i.ray === "right" || (i.right == null && i.left != null)))
+      max += pad;
+    if (intervals.some((i) => i.ray === "left" || (i.left == null && i.right != null)))
+      min -= pad;
+    if (intervals.some((i) => i.left != null && i.right != null)) {
+      min -= Math.min(1, pad * 0.3);
+      max += Math.min(1, pad * 0.3);
+    }
+    min = Math.floor(min) - 1;
+    max = Math.ceil(max) + 1;
+    if (max - min < 6) {
+      const c = (min + max) / 2;
+      min = c - 3;
+      max = c + 3;
+    }
+    return { min, max };
+  }
+
+  function xToPx(x, min, max, width, margin) {
+    return margin + ((x - min) / (max - min)) * (width - 2 * margin);
+  }
+
+  function svgEl(tag, attrs) {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    return el;
+  }
+
+  const SCALE = 1.5;
+  
+  const LAYOUT = {
+    W: 720 * SCALE,
+    H: 200 * SCALE,
+    margin: 48 * SCALE,
+    axisY: 122 * SCALE,
+    markGap: 80 * SCALE,
+    r: 7 * SCALE,
+    fill: "rgba(59, 130, 246, 0.28)",
+    rangeStroke: "#1e40af",
+    rangeWidth: 3.5 * SCALE,
+    markerStroke: 2 * SCALE,
+    axisStroke: 2.5 * SCALE,
+    tickLen: 9 * SCALE,
+    tickFont: 18 * SCALE,
+    labelDy: 34 * SCALE
+  };
+
+  function openJoinX(px, slant, markY, axisY) {
+    const gap = axisY - markY;
+    return slant === "ne" ? px + gap : px - gap;
+  }
+
+  function markYForLane(axisY, laneOffset) {
+    return axisY - LAYOUT.markGap - laneOffset;
+  }
+
+  function addFillPolygon(layer, points) {
+    layer.appendChild(svgEl("polygon", {
+      points: points.map((p) => p.join(",")).join(" "),
+      fill: LAYOUT.fill
+    }));
+  }
+
+  function drawEndpointMarker(g, px, closed, slant, markY, axisY) {
+    const { r, markerStroke } = LAYOUT;
+    if (closed) {
+      g.appendChild(svgEl("line", {
+        x1: px, y1: axisY - r, x2: px, y2: markY,
+        stroke: "#1a1a2e", "stroke-width": markerStroke
+      }));
+      g.appendChild(svgEl("circle", { cx: px, cy: axisY, r, fill: "#1a1a2e" }));
+      return px;
+    }
+    const joinX = openJoinX(px, slant, markY, axisY);
+    g.appendChild(svgEl("line", {
+      x1: px, y1: axisY, x2: joinX, y2: markY,
+      stroke: "#1a1a2e", "stroke-width": markerStroke
+    }));
+    g.appendChild(svgEl("circle", {
+      cx: px, cy: axisY, r, fill: "#fff", stroke: "#1a1a2e", "stroke-width": markerStroke
+    }));
+    return joinX;
+  }
+
+  function buildIntervalFill(axisY, markY, leftOpen, rightOpen, pL, pR) {
+    const pts = [[pL, axisY]];
+    if (leftOpen) pts.push([openJoinX(pL, "ne", markY, axisY), markY]);
+    else pts.push([pL, markY]);
+    if (rightOpen) {
+      pts.push([openJoinX(pR, "nw", markY, axisY), markY]);
+      pts.push([pR, axisY]);
+    } else {
+      pts.push([pR, markY]);
+      pts.push([pR, axisY]);
+    }
+    return pts;
+  }
+
+  function drawIntervalOnLayers(it, min, max, W, margin, axisY, markY, fillsLayer, markG, xMin, xMax) {
+    const { rangeStroke, rangeWidth } = LAYOUT;
+    const y = axisY;
+
+    function addRangeLine(x1, x2) {
+      markG.appendChild(svgEl("line", {
+        x1, y1: markY, x2, y2: markY,
+        stroke: rangeStroke, "stroke-width": rangeWidth, "stroke-linecap": "round"
+      }));
+      // 追加: ラベル（①、②）がある場合は線の中央上に描画
+      if (it.label) {
+        let drawX1 = Math.max(margin, Math.min(W - margin, x1));
+        let drawX2 = Math.max(margin, Math.min(W - margin, x2));
+        const textEl = svgEl("text", {
+          x: (drawX1 + drawX2) / 2,
+          y: markY - 6,
+          "text-anchor": "middle",
+          "font-size": "40",
+          "font-weight": "bold",
+          fill: rangeStroke,
+          "font-family": "sans-serif"
+        });
+        textEl.textContent = it.label;
+        markG.appendChild(textEl);
+      }
+    }
+
+    if (it.left != null && it.right != null) {
+      const pL = xToPx(it.left, min, max, W, margin);
+      const pR = xToPx(it.right, min, max, W, margin);
+      const joinL = drawEndpointMarker(markG, pL, !it.leftOpen, "ne", markY, y);
+      const joinR = drawEndpointMarker(markG, pR, !it.rightOpen, "nw", markY, y);
+      addFillPolygon(fillsLayer, buildIntervalFill(y, markY, it.leftOpen, it.rightOpen, pL, pR));
+      addRangeLine(joinL, joinR);
+    } else if (it.ray === "right" || (it.left != null && it.right == null)) {
+      const px = xToPx(it.left, min, max, W, margin);
+      const joinX = drawEndpointMarker(markG, px, !it.leftOpen, "ne", markY, y);
+      const endX = xMax + 8;
+      if (it.leftOpen) {
+        addFillPolygon(fillsLayer, [[px, y], [joinX, markY], [endX, markY], [endX, y]]);
+      } else {
+        addFillPolygon(fillsLayer, [[px, y], [px, markY], [endX, markY], [endX, y]]);
+      }
+      addRangeLine(joinX, endX);
+    } else {
+      const px = xToPx(it.right, min, max, W, margin);
+      const joinX = drawEndpointMarker(markG, px, !it.rightOpen, "nw", markY, y);
+      const endX = xMin - 8;
+      if (it.rightOpen) {
+        addFillPolygon(fillsLayer, [[px, y], [joinX, markY], [endX, markY], [endX, y]]);
+      } else {
+        addFillPolygon(fillsLayer, [[endX, y], [endX, markY], [px, markY], [px, y]]);
+      }
+      addRangeLine(endX, joinX);
+    }
+  }
+
+  function draw(intervals) {
+    const { min, max } = bounds(intervals);
+    const { W, margin, axisStroke, tickLen, tickFont, labelDy } = LAYOUT;
+    const offsets = intervals.map((it) => it.laneOffset || 0);
+    const topExtra = Math.max(0, -Math.min(...offsets, 0));
+    const bottomExtra = Math.max(0, Math.max(...offsets, 0));
+    const axisY = LAYOUT.axisY + bottomExtra;
+    const H = LAYOUT.H + topExtra + bottomExtra;
+
+    const svg = svgEl("svg", {
+      viewBox: `0 0 ${W} ${H}`,
+      width: W,
+      height: H,
+      role: "img",
+      "aria-label": "数直線上の範囲"
+    });
+
+    const axis = svgEl("g", {});
+    const xMin = xToPx(min, min, max, W, margin);
+    const xMax = xToPx(max, min, max, W, margin);
+
+    axis.appendChild(svgEl("line", {
+      x1: xMin - 12, y1: axisY, x2: xMax + 28, y2: axisY,
+      stroke: "#334155", "stroke-width": axisStroke
+    }));
+    axis.appendChild(svgEl("polygon", {
+      points: `${xMax + 28},${axisY} ${xMax + 16},${axisY - 6} ${xMax + 16},${axisY + 6}`,
+      fill: "#334155"
+    }));
+    axis.appendChild(svgEl("text", {
+      x: xMax + 32, y: axisY + 6,
+      "font-size": tickFont, fill: "#334155",
+      "font-family": "Cambria Math, Times New Roman, serif",
+      "font-style": "italic"
+    })).textContent = "x";
+
+    for (let t = Math.ceil(min); t <= Math.floor(max); t++) {
+      const px = xToPx(t, min, max, W, margin);
+      axis.appendChild(svgEl("line", {
+        x1: px, y1: axisY - tickLen, x2: px, y2: axisY + tickLen,
+        stroke: "#64748b", "stroke-width": 1.25
+      }));
+      const text = svgEl("text", {
+        x: px, y: axisY + labelDy, "text-anchor": "middle",
+        "font-size": tickFont, fill: "#334155", "font-family": "Cambria Math, serif"
+      });
+      text.textContent = niceNum(t);
+      axis.appendChild(text);
+    }
+
+    const fillsLayer = svgEl("g", {});
+    const marksLayer = svgEl("g", {});
+
+    for (const it of intervals) {
+      const markG = svgEl("g", {});
+      const markY = markYForLane(axisY, it.laneOffset || 0);
+      drawIntervalOnLayers(it, min, max, W, margin, axisY, markY, fillsLayer, markG, xMin, xMax);
+      marksLayer.appendChild(markG);
+    }
+
+    svg.appendChild(fillsLayer);
+    svg.appendChild(axis);
+    svg.appendChild(marksLayer);
+
+    return svg;
+  }
+
+  const expr1 = document.getElementById("expr1");
+  const expr2 = document.getElementById("expr2");
+  const resultText = document.getElementById("result-text");
+  const msg = document.getElementById("message");
+  const wrap = document.getElementById("canvas-wrap");
+  const drawBtn = document.getElementById("drawBtn");
+
+  function render() {
+    const combined = combineTwoInputs(expr1.value, expr2.value);
+    if (combined.error) {
+      msg.textContent = combined.error;
+      msg.className = "";
+      resultText.innerHTML = "";
+      wrap.innerHTML = "";
+      return;
+    }
+    const intervals = intervalsForDraw(combined);
+    const modeLabel = {
+      and: "かつ（共通範囲）",
+      or: "または",
+      single: "答え"
+    }[combined.mode] || "答え";
+    //resultText.innerHTML = "<span class=\"tag\">" + modeLabel + "</span>" + combined.display;
+    msg.textContent = "表示しました";
+    msg.className = "ok";
+    wrap.innerHTML = "";
+    wrap.appendChild(draw(intervals));
+  }
+
+  function onEnter(e) {
+    if (e.key === "Enter") render();
+  }
+
+  drawBtn.addEventListener("click", render);
+  expr1.addEventListener("keydown", onEnter);
+  expr2.addEventListener("keydown", onEnter);
+  document.querySelectorAll("[data-e1]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      expr1.value = btn.getAttribute("data-e1");
+      expr2.value = btn.getAttribute("data-e2") || "";
+      render();
+    });
+  });
+
+  // 追加: 入力補助ボタンのクリックイベント
+  document.querySelectorAll(".helper-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.closest(".helper-btns").getAttribute("data-target");
+      const input = document.getElementById(targetId);
+
+      const action = btn.dataset.action;
+
+      // ★削除系処理
+      if (action === "clear") {
+        input.value = "";
+        input.focus();
+        return;
+      }
+
+      if (action === "backspace") {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+
+        // 範囲選択あり → 削除
+        if (start !== end) {
+          input.value = input.value.substring(0, start) + input.value.substring(end);
+          input.setSelectionRange(start, start);
+        } 
+        // カーソル1文字削除
+        else if (start > 0) {
+          input.value =
+            input.value.substring(0, start - 1) +
+            input.value.substring(end);
+          input.setSelectionRange(start - 1, start - 1);
+        }
+
+        input.focus();
+        return;
+      }
+      const text = btn.textContent;
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      input.value = input.value.substring(0, start) + text + input.value.substring(end);
+      input.focus();
+      input.setSelectionRange(start + text.length, start + text.length);
+    });
+  });
+
+  render();
+})();
+  </script>
+</body>
+</html>
